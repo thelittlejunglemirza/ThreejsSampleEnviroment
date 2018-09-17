@@ -367,6 +367,15 @@ function checkKeyboard() {
     if (lastSwitch === null || Date.now() - lastSwitch > 1000)
     {
       discoBool = !discoBool;
+      if (music){
+        music = !music;
+        audioLoader.load( 'sounds/music.mp3', function( buffer ) {
+          sound.setBuffer( buffer );
+          sound.setLoop( true );
+          sound.setVolume( 0.5 );
+          sound.stop();
+        });
+      }
       lastSwitch = Date.now()
     }
   }
