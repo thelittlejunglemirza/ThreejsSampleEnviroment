@@ -24,6 +24,14 @@ console.log(foo);
 myvector = new THREE.Vector3(0,1,2);
 console.log('myvector =',myvector);
 
+
+// STATE VARIABLES
+var discoBool = false;
+var discoColor = 0xff0000;
+var lastSwitch = null;
+var music = false;
+var text = 'press     SPACE   to party!';
+
 // SETUP RENDERER & SCENE
 var canvas = document.getElementById('canvas');
 var scene = new THREE.Scene();
@@ -35,6 +43,20 @@ canvas.appendChild(renderer.domElement);
 var camera = new THREE.PerspectiveCamera(30,1,0.1,1000); // view angle, aspect ratio, near, far
 camera.position.set(0,12,20);
 camera.lookAt(0,0,0);
+
+/////////////////////////////////////
+// ADD audio listener and add to camera
+/////////////////////////////////////
+
+var listener = new THREE.AudioListener();
+camera.add( listener );
+
+// create a global audio source
+var sound = new THREE.Audio( listener );
+
+// load a sound and set it as the Audio object's buffer
+var audioLoader = new THREE.AudioLoader();
+
 scene.add(camera);
 
 // SETUP ORBIT CONTROLS OF THE CAMERA
@@ -62,10 +84,12 @@ window.onscroll = function () {
 // ADD LIGHTS  and define a simple material that uses lighting
 /////////////////////////////////////
 
+// light = new THREE.PointLight(0x16D633);
 light = new THREE.PointLight(0xffffff);
 light.position.set(0,4,2);
 scene.add(light);
 ambientLight = new THREE.AmbientLight(0x606060);
+// ambientLight = new THREE.AmbientLight(0x000000);
 scene.add(ambientLight);
 
 var diffuseMaterial = new THREE.MeshLambertMaterial( {color: 0xffffff} );
@@ -75,6 +99,30 @@ var diffuseMaterialBoxThree = new THREE.MeshLambertMaterial( {color: 0xFFC0CB} )
 var diffuseMaterial2 = new THREE.MeshLambertMaterial( {color: 0xFF4500, side: THREE.DoubleSide } );
 var basicMaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
 var armadilloMaterial = new THREE.MeshBasicMaterial( {color: 0x7fff7f} );
+
+/////////////////////////////////////
+// ADD audio
+/////////////////////////////////////
+
+/////////////////////////////////////
+// material with text
+/////////////////////////////////////
+var dynamicTexture	= new THREEx.DynamicTexture(512,512)
+dynamicTexture.context.font	= "bolder 90px Verdana";
+dynamicTexture.texture.anisotropy = renderer.getMaxAnisotropy()
+dynamicTexture.clear('cyan')
+dynamicTexture.drawTextCooked({
+	text		: text,
+	lineHeight	: 0.25,
+})
+
+var geometry	= new THREE.CubeGeometry( 1, 1, 1);
+var material	= new THREE.MeshBasicMaterial({
+  map	: dynamicTexture.texture
+})
+var mesh	= new THREE.Mesh( geometry, material );
+mesh.position.set(1.5, 4, -3);
+scene.add( mesh );
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////  OBJECTS /////////////////////////////////////////////////
@@ -304,15 +352,57 @@ loader.load( 'obj/armadillo.obj', function ( object ) {
 var keyboard = new THREEx.KeyboardState();
 function checkKeyboard() {
   if (keyboard.pressed("W") && light.position.y < 5) {
-    console.log('W pressed');
     light.position.y += 0.1;
-  } else if (keyboard.pressed("S") && light.position.y > -5)
-    light.position.y -= 0.1;
-  if (keyboard.pressed("A") && light.position.x > -5)
-    light.position.x -= 0.1;
-  else if (keyboard.pressed("D") && light.position.x < 5)
-    light.position.x += 0.1;
+  }
+  else if (keyboard.pressed("S") && light.position.y > -5)  {
+      light.position.y -= 0.1;
+  }
+  if (keyboard.pressed("A") && light.position.x > -5) {
+      light.position.x -= 0.1;
+  }
+  else if (keyboard.pressed("D") && light.position.x < 5) {
+      light.position.x += 0.1;
+  }
+  else if (keyboard.pressed("space")) {
+    if (lastSwitch === null || Date.now() - lastSwitch > 1000)
+    {
+      discoBool = !discoBool;
+      lastSwitch = Date.now()
+    }
+  }
   sphere.position.set(light.position.x, light.position.y, light.position.z);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+// LISTEN TO KEYBOARD
+///////////////////////////////////////////////////////////////////////////////////////
+function disco() {
+  if (!music){
+    music = !music;
+    audioLoader.load( 'sounds/music.mp3', function( buffer ) {
+    	sound.setBuffer( buffer );
+    	sound.setLoop( true );
+    	sound.setVolume( 0.5 );
+    	sound.play();
+    });
+    scene.remove( mesh );
+    text = 'there is  audio     turn up!'
+    dynamicTexture.clear('cyan')
+    dynamicTexture.drawTextCooked({
+    	text		: text,
+    	lineHeight	: 0.25,
+    })
+    var mesh	= new THREE.Mesh( geometry, material );
+    mesh.position.set(1.5, 4, -3);
+    scene.add( mesh );
+
+  }
+  light.color.setHex(discoColor);
+  basicMaterial.color.setHex(discoColor);
+  discoColor = discoColor >>> 1;
+  if(discoColor === 0x0000){
+    discoColor = 0xf00000
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -320,6 +410,9 @@ function checkKeyboard() {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 function update() {
+  if(discoBool){
+    disco()
+  }
   checkKeyboard();
   requestAnimationFrame(update);      // requests the next update call;  this creates a loop
   renderer.render(scene, camera);
