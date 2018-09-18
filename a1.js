@@ -31,6 +31,10 @@ var discoColor = 0xff0000;
 var lastSwitch = null;
 var music = false;
 var text = 'press     SPACE   to party!';
+var clock = new THREE.Clock();
+var danceMove = 0;
+var danceBool = null;
+var breakDance = false;
 
 // SETUP RENDERER & SCENE
 var canvas = document.getElementById('canvas');
@@ -327,6 +331,8 @@ var manager = new THREE.LoadingManager();
 	console.log( item, loaded, total );
 };
 
+var armadillo = null;
+
 var onProgress = function ( xhr ) {
 	if ( xhr.lengthComputable ) {
 		var percentComplete = xhr.loaded / xhr.total * 100;
@@ -341,9 +347,14 @@ loader.load( 'obj/armadillo.obj', function ( object ) {
 		if ( child instanceof THREE.Mesh ) {
 			child.material = armadilloMaterial;
 		}
-	} );
+	});
+  console.log(typeof object);
+  // console.log(scene);
 	scene.add( object );
 }, onProgress, onError );
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // LISTEN TO KEYBOARD
@@ -381,7 +392,7 @@ function checkKeyboard() {
   }
   sphere.position.set(light.position.x, light.position.y, light.position.z);
 }
-
+var startTime = null;
 ///////////////////////////////////////////////////////////////////////////////////////
 // LISTEN TO KEYBOARD
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -404,7 +415,8 @@ function disco() {
     var mesh	= new THREE.Mesh( geometry, material );
     mesh.position.set(1.5, 4, -3);
     scene.add( mesh );
-
+    t = Date.now();
+    renderer.setClearColor(0x000000);
   }
   light.color.setHex(discoColor);
   basicMaterial.color.setHex(discoColor);
@@ -414,13 +426,57 @@ function disco() {
   }
 }
 
+function armadiloDance(obj, t) {
+  if (t < 8.0)
+  {
+    obj.rotation.y -= 0.02
+  }else if(t < 17.0){
+    obj.rotation.y += 0.02
+  }else if(t < 25.0){
+    if(danceBool === null){
+      obj.position.y += 1
+      danceBool = false;
+    }
+    if(danceBool){
+      danceMove++;
+      obj.rotation.y -= 0.03;
+      obj.rotation.x += 0.03;
+      if (danceMove > 5) {
+        danceMove = 0;
+        danceMove = !danceMove;
+      }
+    } else {
+      obj.rotation.y += 0.03;
+      obj.rotation.x -= 0.03;
+      if (danceMove > 5) {
+        danceMove = 0;
+        danceMove = !danceMove;
+      }
+    }
+  } else if (t > 25.0)
+  {
+  // } else {
+    if (!breakDance) {
+      obj.position.set(0,1,0)
+      obj.rotation.x = Math.PI
+      breakDance = true;
+    }
+    obj.rotation.y += 0.1
+  }
+
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////
 // UPDATE CALLBACK
 ///////////////////////////////////////////////////////////////////////////////////////
 
 function update() {
+  t = clock.getElapsedTime()
+  // console.log(t);
   if(discoBool){
-    disco()
+    disco();
+    armadiloDance(scene.children[18], t)
   }
   checkKeyboard();
   requestAnimationFrame(update);      // requests the next update call;  this creates a loop
