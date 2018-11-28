@@ -132,7 +132,8 @@ varying vec3 vcsPosition;
 void main( void ) {
 
   vec3 N = normalize(vcsNormal);
-  vec3 I = normalize(vcsPosition - ocsPosition);
+  //vec3 I = normalize(vcsPosition - ocsPosition);
+  vec3 I = lightPosition * (vec3(0.0, 0.0, 0.0) - vcsPosition);
   vec3 R = reflect(I , N);
   vec4 vec = vec4(R.x, R.y, R.z, 0.0);
   vec4 newvec = matrixWorld*vec;
@@ -141,6 +142,36 @@ void main( void ) {
     float v = (-newvec.z / newvec.y + 1.0) / 2.0;
     float u = (-newvec.x / newvec.y + 1.0) / 2.0;
     gl_FragColor = texture2D(uPosyTexture, vec2(u,v));
+  }
+
+  if(newvec.y <= newvec.x && newvec.y <= newvec.z){
+    float v = (-newvec.z / newvec.y + 1.0) / 2.0;
+    float u = (newvec.x / newvec.y + 1.0) / 2.0;
+    gl_FragColor = texture2D(uNegyTexture, vec2(u,v));
+  }
+
+  if(newvec.x >= abs(newvec.y) && newvec.x >= abs(newvec.z)){
+    float v = (newvec.z / newvec.x + 1.0) / 2.0;
+    float u = (newvec.y / newvec.x + 1.0) / 2.0;
+    gl_FragColor = texture2D(uPosxTexture, vec2(v,u));
+  }
+
+  if(abs(newvec.x) >= abs(newvec.y) && newvec.x < newvec.z){
+    float v = (newvec.z / newvec.x + 1.0) / 2.0;
+    float u = (-newvec.y / newvec.x + 1.0) / 2.0;
+    gl_FragColor = texture2D(uNegxTexture, vec2(v, u));
+  }
+
+  if(newvec.z >= abs(newvec.y) && newvec.z >= abs(newvec.x)){
+    float v = (-newvec.x / newvec.z + 1.0) / 2.0;
+    float u = (newvec.y / newvec.z + 1.0) / 2.0;
+    gl_FragColor = texture2D(uPoszTexture, vec2(v,u));
+  }
+
+  if(abs(newvec.z) >= abs(newvec.y) && newvec.z < newvec.x && abs(newvec.z) >= abs(newvec.x)){
+    float v = (-newvec.x / newvec.z + 1.0) / 2.0;
+    float u = (-newvec.y / newvec.z + 1.0) / 2.0;
+    gl_FragColor = texture2D(uNegzTexture, vec2(v,u));
   }
 
   // gl_FragColor = vec4(N,1.0);
