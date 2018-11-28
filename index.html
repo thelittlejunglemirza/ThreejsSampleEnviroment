@@ -250,9 +250,14 @@ float pNoise(vec2 p, int res){
 varying vec3 ocsPosition;
 varying vec3 vcsPosition;
 void main( void ) {
-  int levels = 1;
-  float i=pNoise(ocsPosition.xy,levels);
-  gl_FragColor = vec4(i,i,i,1.0);
+  int levels = 4;
+  // by increasing the levels the dents and indents on the noise increases
+  // makes the geometry less smooth
+  float i=pNoise(vcsPosition.xy,levels);
+  // when we move the camera shape of the noise will dynamically change
+  float j=floor(i+0.9); 
+  gl_FragColor = vec4(j,j,0.3,1.0);
+  // gl_FragColor = vec4(i,i,i,1.0);
 }
 </script>
 
