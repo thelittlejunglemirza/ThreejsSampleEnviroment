@@ -1,7 +1,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>raytracing with threejs</title>
+    <title>raytracing threejs</title>
     <style>
       body { margin: 0; } canvas {width: 100%;
       height: 100% }
@@ -132,7 +132,12 @@ vec3 localShade(vec3 P, vec3 N, vec3 I, vec3 surfColor) {
 //  (2) now additionally check to see if the object is in shadow by building and casting
 //      a shadow ray.  If the point is in shadow, return black. Otherwise return the diffuse shading.
 
-vec3 yourColor = vec3(0,0,0);
+  vec3 yourColor;
+  if(dot(N, I) < 0.0){
+    yourColor = vec3(0,0,0);
+  } else {
+    yourColor = dot(N, I) * surfColor;
+  }
   return yourColor;
 }
 
@@ -185,10 +190,10 @@ vec3 rayCast(ray myRay)             // return color
 //     otherwise return black
 
   float nearest_t = nearestT(myRay);              // find closest object
-  float kReflect = nearestSphere.mtrl.kReflect;         // keep these lines for use in step (7)
+  float kReflect = nearestSphere.mtrl.kReflect;   // keep these lines for use in step (7)
   float kLocal = nearestSphere.mtrl.kLocal;       // keep these lines for use in step (7)
   
-  if (nearest_t < largeT) {       // hit an object?
+  if (nearest_t < largeT) {           // hit an object?
     // return vec3(1,1,1);           // color this white for now (but replace this with steps 1--4 below)
     // return nearestSphere.mtrl.color;
 
@@ -198,7 +203,12 @@ vec3 rayCast(ray myRay)             // return color
 // (3) compute the incident direction, I
 // (4) call the localShade function to compute the local shading
 
-//    vec3 localColor = localShade(P,N,I,nearestSphere.mtrl.color);     // local shading
+    vec3 P = nearest_t * myRay.direction + myRay.origin;
+    //vec3 N = normalize( P - nearestSphere.position);
+    vec3 N = normalize(nearestSphere.position - P);
+    vec3 I = normalize(P - lightPosition);
+    vec3 localColor = localShade(P,N,I,nearestSphere.mtrl.color);     // local shading
+    return localColor;
 
 // (4.5)  you will notice that the light source sphere itself ends up being black.
 //        This is because the light source point is inside the sphere, so N.L = -1 everywhere.
@@ -268,7 +278,8 @@ void main()
   scene_spheres[3] = sphere3;  
 
   ray pixelRay;
-    // compute normalized screen coordinates for pixel:  [-1,1] in y;  [-a,a] in x, where a=aspect ratio
+
+  // compute normalized screen coordinates for pixel:  [-1,1] in y;  [-a,a] in x, where a=aspect ratio
   vec2 uv = (-1.0 + 2.0*gl_FragCoord.xy / resolution.xy) * vec2(resolution.x/resolution.y, 1.0);
   pixelRay.origin = vec3(0,0,0);                        // ray starts at eye:  origin
   pixelRay.direction = normalize(vec3(0.5*uv,-1.0));    // look in the direction of a given pixel
